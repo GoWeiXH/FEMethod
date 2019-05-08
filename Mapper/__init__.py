@@ -6,5 +6,4 @@ from .DFMapper import mean_std
 from .DFMapper import max_min
 
 
-__all__ = ['median_abs', 'non_linear', 'key_value',
-           'one_step', 'mean_std', 'max_min']
+__all__ = ['median_abs', 'non_linear', 'key_value', 'one_step', 'mean_std', 'max_min']
