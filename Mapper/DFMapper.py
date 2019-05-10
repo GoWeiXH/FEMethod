@@ -1,17 +1,15 @@
 import pandas as pd
 
 
-def key_value(data: pd.DataFrame, col: str, map_dict: dict, layer=False, drop=True) -> pd.DataFrame:
+def key_value(col_data: pd.DataFrame, map_dict: dict, layer=False) -> pd.DataFrame:
     """
     将数据中某一列数据根据给定的映射字典进行替换
     具有两种映射形式：普通映射、分层映射
 
-    :param data: 原始完整 DataFrame 数据
-    :param col: 需要使用序号编码表示的列名称
+    :param col_data: 需要编码表示的列数据
     :param map_dict: 指定映射字典
     :param layer: 是否分层映射，如果 True，则 map_dict 中的 values 应为可迭代对象
-    :param drop: 是否删除原列数据
-    :return: 替换后的 DataFrame 数据
+    :return: 映射后的 DataFrame 数据
 
     例：
         1) 普通映射 传入的字典: {'jack': 'a',
@@ -35,13 +33,13 @@ def key_value(data: pd.DataFrame, col: str, map_dict: dict, layer=False, drop=Tr
                 raise TypeError('The value of map_dict must be a list')
         map_dict = new_dict
 
-    col_data = pd.DataFrame(data[col].map(map_dict))
-    col_data.columns = [f'{col}_mapped']
+    col_name = getattr(col_data, 'name')
+    col_data = pd.DataFrame(col_data.map(map_dict), columns=[f'{col_name}_mapped'])
 
-    return __concat_data(drop, data, col_data, col)
+    return col_data
 
 
-def max_min():
+def max_min(data: pd.DataFrame, col: str, map):
     """
     最大-最小归一化
 

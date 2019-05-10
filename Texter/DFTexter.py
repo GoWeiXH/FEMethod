@@ -10,7 +10,7 @@ def uni_gram():
 
 def bi_gram(freq=True):
     """
-    2-gram
+    2-gram (to all?)
 
     是否转换成频率
 
@@ -40,3 +40,7 @@ def gram_td_idf():
 
     :return:
     """
+
+
+def word2vec():
+    ...

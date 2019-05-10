@@ -5,21 +5,19 @@ from collections import Counter
 import math
 
 
-def ordinary(data: pd.DataFrame, col: str, step=1, reverse=False, drop=True) -> pd.DataFrame:
+def ordinary(col_data: pd.DataFrame, step=1, reverse=False) -> pd.DataFrame:
     """
     将数据中的某一列使用序号编码进行替换，
     序号取值从 0 开始，其取值个数与 col 列中的取值个数一致
 
-    :param data: 原始完整 DataFrame 数据
-    :param col: 需要使用序号编码表示的列名称
+    :param col_data: 需要编码表示的列数据
     :param step: 默认以 1 步长增长，可以指定
     :param reverse: 默认 False，取值出现次数越多值越大；True 则相反
-    :param drop: 是否删除原列数据
-    :return: 替换后的 DataFrame 数据
+    :return: 编码后的 DataFrame 数据
     """
 
     # 以字典形式统计当前所选列数据共有多少种取值
-    unique = Counter(data[col])
+    unique = Counter(col_data)
 
     # 根据每个取值出现的次数进行排序，出现次数多的取值大
     unique = sorted(unique, key=lambda k: unique[k], reverse=reverse)
@@ -28,25 +26,23 @@ def ordinary(data: pd.DataFrame, col: str, step=1, reverse=False, drop=True) -> 
     k_dict = dict(zip(unique, range(0, step*len(unique), step)))
 
     # 对数据进行替换
-    col_data = pd.DataFrame(data[col].map(k_dict))
-    col_data.columns = [f'{col}_ord']
+    col_name = getattr(col_data, 'name')
+    ord_data = pd.DataFrame(col_data.map(k_dict), columns=[f'{col_name}_ord'])
 
-    return __concat_data(drop, data, col_data, col)
+    return ord_data
 
 
-def binary(data: pd.DataFrame, col: str, reverse=False, drop=True) -> pd.DataFrame:
+def binary(col_data: pd.DataFrame, reverse=False) -> pd.DataFrame:
     """
     将数据中的某一列使用二进制编码进行替换
 
-    :param data: 原始完整 DataFrame 数据
-    :param col: 需要使用二进制编码表示的列名称
+    :param col_data: 需要编码表示的列数据
     :param reverse: 默认出现次数多的取值所对应的二进制数大，reverse=True 则相反
-    :param drop: 是否删除原列数据
-    :return: 替换后的 DataFrame 数据
+    :return: 编码后的 DataFrame 数据
     """
 
     # 以字典形式统计当前所选列数据共有多少种取值
-    k_dict = dict(Counter(data[col]))
+    k_dict = dict(Counter(col_data))
     unique_list = sorted(k_dict, key=lambda x: k_dict[x], reverse=reverse)
 
     # 计算根据当前取值个数所需要的二进制位数，向上取整数位
@@ -60,38 +56,38 @@ def binary(data: pd.DataFrame, col: str, reverse=False, drop=True) -> pd.DataFra
 
         # 以 0 补足缺少的位数
         r = ['0'] * (max_len - len(r)) + r
-        k_dict[k] = "".join(r)
+        # k_dict[k] = "".join(r)
+        k_dict[k] = r
 
     # 使用二进制映射，对所选列数据中的元素进行替换
     # 例如：以 '001' 进行替换
-    col_data = data[col].map(k_dict)
+    cols_data = np.array(list(col_data.map(k_dict)))
 
     # 将一列数据以 '位' 进行拆分
     bin_data = pd.DataFrame()
 
-    for i in range(max_len):
-        bin_data[f'{col}_index{i}'] = col_data.map(lambda x: x[i])
+    col_name = getattr(col_data, 'name')
+    for i in range(cols_data.shape[1]):
+        bin_data[f'{col_name}_bin_{i}'] = cols_data[:, i]
 
     # 返回数据
-    return __concat_data(drop, data, bin_data, col)
+    return bin_data
 
 
-def one_hot(data: pd.DataFrame, col: str, engine='pd', drop=True) -> pd.DataFrame:
+def one_hot(col_data: pd.DataFrame, engine='pd') -> pd.DataFrame:
     """
     将数据中的某一列使用 one-hot 编码进行替换
 
-    :param data: 原始完整 DataFrame 数据
-    :param col: 需要使用 one-hot 编码表示的列名称
-    :param drop: 是否删除原列数据
+    :param col_data: 需要编码表示的列数据
     :param engine: 默认使用 pandas.get_dummies()，否则使用自己实现方式
-    :return: 替换后的 DataFrame 数据
+    :return: 编码后的 DataFrame 数据
     """
 
+    col_name = getattr(col_data, 'name')
     if engine == 'pd':
-        return pd.concat((pd.get_dummies(data, columns=[col]), data[col]), axis=1)
-
-    # 获取数据
-    col_data = data[col]
+        oh_data = pd.get_dummies(col_data, columns=[col_name])
+        oh_data.columns = [f'{col_name}_{name}' for name in oh_data.columns]
+        return oh_data
 
     # 计算该列取值个数
     unique = set(col_data)
@@ -110,26 +106,21 @@ def one_hot(data: pd.DataFrame, col: str, engine='pd', drop=True) -> pd.DataFram
 
     # 添加 one-hot 列名，生成 DataFrame 数据
     k_dict_inverse = dict(zip(k_dict.values(), k_dict.keys()))
-    columns = [f'{col}_{k_dict_inverse[i]}' for i in range(len(unique))]
+    columns = [f'{col_name}_{k_dict_inverse[i]}' for i in range(len(unique))]
     oh_data = pd.DataFrame(init_matrix, columns=columns)
 
     # 返回数据
-    return __concat_data(drop, data, oh_data, col)
+    return oh_data
 
 
-def ratio(data: pd.DataFrame, col: str, n_digits=3, drop=True) -> pd.DataFrame:
+def ratio(col_data: pd.DataFrame, n_digits=3) -> pd.DataFrame:
     """
     将数据中的某一列使用其出现频率进行编码
 
-    :param data: 原始完整 DataFrame 数据
-    :param col: 需要使用频率编码表示的列名称
+    :param col_data: 需要编码表示的列数据
     :param n_digits: 计算频率保留小数位数
-    :param drop: 是否删除原列数据
-    :return: 替换后的 DataFrame 数据
+    :return: 编码后的 DataFrame 数据
     """
-
-    # 获取所选列数据
-    col_data = data[col]
 
     # 计算各取值的个数
     k_dict = Counter(col_data)
@@ -140,16 +131,8 @@ def ratio(data: pd.DataFrame, col: str, n_digits=3, drop=True) -> pd.DataFrame:
         k_dict[k] = round(v / total, n_digits)
 
     # 利用取值频率映射字典修改数据
-    col_data = pd.DataFrame(col_data.map(k_dict))
-    col_data.columns = [f'{col}_ratio']
+    col_name = getattr(col_data, 'name')
+    rat_name = pd.DataFrame(col_data.map(k_dict), columns=[f'{col_name}_ratio'])
 
     # 返回数据
-    return __concat_data(drop, data, col_data, col)
-
-
-def __concat_data(drop: bool, data: pd.DataFrame, new_data: pd.DataFrame, col: str) -> pd.DataFrame:
-    result = pd.concat([data, new_data], axis=1)
-    if drop:
-        return result.drop(columns=[col])
-    else:
-        return result
+    return rat_name
