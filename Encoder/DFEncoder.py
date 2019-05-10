@@ -14,6 +14,18 @@ def ordinary(col_data: pd.DataFrame, step=1, reverse=False) -> pd.DataFrame:
     :param step: 默认以 1 步长增长，可以指定
     :param reverse: 默认 False，取值出现次数越多值越大；True 则相反
     :return: 编码后的 DataFrame 数据
+
+    例:
+        >> data = [['jack', 'old', 180], ['jack', 'young', 175],
+                   ['jerry', 'middle', 170], ['tom', 'young', 175]]
+        >> pd_data = pd.DataFrame(data, columns=['name', 'age', 'height'])
+        >> ordinary(pd_data['name'])
+               name_ord
+        0         2
+        1         2
+        2         0
+        3         1
+
     """
 
     # 以字典形式统计当前所选列数据共有多少种取值
@@ -27,7 +39,8 @@ def ordinary(col_data: pd.DataFrame, step=1, reverse=False) -> pd.DataFrame:
 
     # 对数据进行替换
     col_name = getattr(col_data, 'name')
-    ord_data = pd.DataFrame(col_data.map(k_dict), columns=[f'{col_name}_ord'])
+    ord_data = pd.DataFrame(col_data.map(k_dict))
+    ord_data.columns = [f'{col_name}_ord']
 
     return ord_data
 
@@ -39,6 +52,18 @@ def binary(col_data: pd.DataFrame, reverse=False) -> pd.DataFrame:
     :param col_data: 需要编码表示的列数据
     :param reverse: 默认出现次数多的取值所对应的二进制数大，reverse=True 则相反
     :return: 编码后的 DataFrame 数据
+
+    例:
+        >> data = [['jack', 'old', 180], ['jack', 'young', 175],
+                   ['jerry', 'middle', 170], ['tom', 'young', 175]]
+        >> pd_data = pd.DataFrame(data, columns=['name', 'age', 'height'])
+        >> binary(pd_data['name'])
+            name_bin_0 name_bin_1
+        0          1          0
+        1          1          0
+        2          0          0
+        3          0          1
+
     """
 
     # 以字典形式统计当前所选列数据共有多少种取值
@@ -81,6 +106,27 @@ def one_hot(col_data: pd.DataFrame, engine='pd') -> pd.DataFrame:
     :param col_data: 需要编码表示的列数据
     :param engine: 默认使用 pandas.get_dummies()，否则使用自己实现方式
     :return: 编码后的 DataFrame 数据
+
+    例：
+        >> data = [['jack', 'old', 180], ['jack', 'young', 175],
+                   ['jerry', 'middle', 170], ['tom', 'young', 175]]
+        >> pd_data = pd.DataFrame(data, columns=['name', 'age', 'height'])
+
+    1)
+        >> one_hot(pd_data['name'])
+                   name_jack  name_jerry  name_tom
+        0          1           0         0
+        1          1           0         0
+        2          0           1         0
+        3          0           0         1
+
+    2)
+        >> one_hot(pd_data['name'], engine=None)
+                   name_jack  name_tom  name_jerry
+        0          1         0           0
+        1          1         0           0
+        2          0         0           1
+        3          0         1           0
     """
 
     col_name = getattr(col_data, 'name')
@@ -120,6 +166,18 @@ def ratio(col_data: pd.DataFrame, n_digits=3) -> pd.DataFrame:
     :param col_data: 需要编码表示的列数据
     :param n_digits: 计算频率保留小数位数
     :return: 编码后的 DataFrame 数据
+
+    例：
+        >> data = [['jack', 'old', 180], ['jack', 'young', 175],
+                   ['jerry', 'middle', 170], ['tom', 'young', 175]]
+        >> pd_data = pd.DataFrame(data, columns=['name', 'age', 'height'])
+        >> ratio(pd_data['name'])
+            name_ratio
+        0        0.50
+        1        0.50
+        2        0.25
+        3        0.25
+
     """
 
     # 计算各取值的个数
@@ -132,7 +190,8 @@ def ratio(col_data: pd.DataFrame, n_digits=3) -> pd.DataFrame:
 
     # 利用取值频率映射字典修改数据
     col_name = getattr(col_data, 'name')
-    rat_name = pd.DataFrame(col_data.map(k_dict), columns=[f'{col_name}_ratio'])
+    rat_data = pd.DataFrame(col_data.map(k_dict))
+    rat_data.columns = [f'{col_name}_ratio']
 
     # 返回数据
-    return rat_name
+    return rat_data

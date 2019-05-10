@@ -12,14 +12,39 @@ def key_value(col_data: pd.DataFrame, map_dict: dict, layer=False) -> pd.DataFra
     :return: 映射后的 DataFrame 数据
 
     例：
+        >> data = [['jack', 'old', 180],
+                ['jack', 'young', 175],
+                ['jerry', 'middle', 170],
+                ['tom', 'young', 175]]
+
+        >> pd_data = pd.DataFrame(data, columns=['name', 'age', 'height'])
+
         1) 普通映射 传入的字典: {'jack': 'a',
                              'jerry': 'b',
                              'tom': 'c'}
            以上键值一一对应，一对一进行映射
 
+            >> map_dict = {'jack': 'a', 'jerry': 'b', 'tom': 'c'}
+            >> key_value(pd_data['name'], map_dict)
+
+              name_mapped
+            0           a
+            1           a
+            2           b
+            3           c
+
+
         2) 分层映射 传入的字典：{'a': ['jack', 'jerry'],
                              'b': ['tom'], }
           以上键值一对多，意味着将 value 中包含的元素映射为 key
+
+            >> map_dict = {'a': ['jack', 'jerry'], 'b': ['tom']}
+            >> key_value(pd_data['name'], map_dict, layer=True)
+              name_mapped
+            0           a
+            1           a
+            2           a
+            3           b
 
     """
 
@@ -34,9 +59,11 @@ def key_value(col_data: pd.DataFrame, map_dict: dict, layer=False) -> pd.DataFra
         map_dict = new_dict
 
     col_name = getattr(col_data, 'name')
-    col_data = pd.DataFrame(col_data.map(map_dict), columns=[f'{col_name}_mapped'])
+    col_data = col_data.map(map_dict)
+    key_value_data = pd.DataFrame(col_data)
+    key_value_data.columns = [f'{col_name}_mapped']
 
-    return col_data
+    return key_value_data
 
 
 def max_min(data: pd.DataFrame, col: str, map):
