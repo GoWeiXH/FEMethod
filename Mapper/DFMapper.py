@@ -26,7 +26,6 @@ def key_value(col_data: pd.DataFrame, map_dict: dict, layer=False) -> pd.DataFra
 
             >> map_dict = {'jack': 'a', 'jerry': 'b', 'tom': 'c'}
             >> key_value(pd_data['name'], map_dict)
-
               name_mapped
             0           a
             1           a
