@@ -1,3 +1,4 @@
+from __Helper import __new_col_data
 import pandas as pd
 
 
@@ -6,7 +7,7 @@ def key_value(col_data: pd.DataFrame, map_dict: dict, layer=False) -> pd.DataFra
     将数据中某一列数据根据给定的映射字典进行替换
     具有两种映射形式：普通映射、分层映射
 
-    :param col_data: 需要编码表示的列数据
+    :param col_data: 需要映射表示的列数据
     :param map_dict: 指定映射字典
     :param layer: 是否分层映射，如果 True，则 map_dict 中的 values 应为可迭代对象
     :return: 映射后的 DataFrame 数据
@@ -57,44 +58,73 @@ def key_value(col_data: pd.DataFrame, map_dict: dict, layer=False) -> pd.DataFra
                 raise TypeError('The value of map_dict must be a list')
         map_dict = new_dict
 
-    col_name = getattr(col_data, 'name')
     col_data = col_data.map(map_dict)
-    key_value_data = pd.DataFrame(col_data)
-    key_value_data.columns = [f'{col_name}_mapped']
 
-    return key_value_data
+    return __new_col_data(col_data, 'mapped')
 
 
-def max_min(data: pd.DataFrame, col: str, map):
+def max_min(col_data: pd.DataFrame)-> pd.DataFrame:
     """
     最大-最小归一化
 
-    :return:
     """
 
+    try:
+        max_v = col_data.max()
+        min_v = col_data.min()
+        d = max_v - min_v
+        col_data = (col_data - min_v) / d
+    except TypeError:
+        raise TypeError('Data type must be consistent (int or float)')
 
-def mean_std():
+    return __new_col_data(col_data, 'scale')
+
+
+def mean_std(col_data: pd.DataFrame)-> pd.DataFrame:
     """
     使用均值、标准差对数据进行变换
 
-    :return:
     """
 
+    try:
+        mean = col_data.mean()
+        std = col_data.std()
+        col_data = (col_data - mean) / std
+    except TypeError:
+        raise TypeError('Data type must be consistent (int or float)')
 
-def median_abs():
+    return __new_col_data(col_data, 'scale')
+
+
+def median_abs(col_data: pd.DataFrame)-> pd.DataFrame:
     """
-    利用中位数、绝对标准差对数据进行变换
+    利用中位数、绝对差对数据进行变换
+    相比 mean_std() 更不易受离群点影响
 
-    :return:
     """
 
+    try:
+        med = col_data.median()
+        abs_d = sum(abs(col_data - med)) / len(col_data)
+        col_data = (col_data - med) / abs_d
+    except TypeError:
+        raise TypeError('Data type must be consistent (int or float)')
 
-def non_linear():
-    """
-    非线性变换
+    return __new_col_data(col_data, 'scale')
 
-    :return:
+
+def non_linear(col_data: pd.DataFrame)-> pd.DataFrame:
     """
+    非线性变换: x / (1+x)
+    适合对值域较大的数据
+
+    """
+    try:
+        col_data = col_data.map(lambda x: x * 10 / (1 + x) - 9)
+    except TypeError:
+        raise TypeError('Data type must be consistent (int or float)')
+
+    return __new_col_data(col_data, 'scale')
 
 
 def one_step():
@@ -107,11 +137,3 @@ def one_step():
 
     :return:
     """
-
-
-def __concat_data(drop: bool, data: pd.DataFrame, new_data: pd.DataFrame, col: str) -> pd.DataFrame:
-    result = pd.concat([data, new_data], axis=1)
-    if drop:
-        return result.drop(columns=[col])
-    else:
-        return result

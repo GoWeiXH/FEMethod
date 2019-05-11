@@ -1,3 +1,5 @@
+from __Helper import __new_col_data
+
 import pandas as pd
 import numpy as np
 
@@ -38,11 +40,9 @@ def ordinary(col_data: pd.DataFrame, step=1, reverse=False) -> pd.DataFrame:
     k_dict = dict(zip(unique, range(0, step*len(unique), step)))
 
     # 对数据进行替换
-    col_name = getattr(col_data, 'name')
-    ord_data = pd.DataFrame(col_data.map(k_dict))
-    ord_data.columns = [f'{col_name}_ord']
+    col_data = col_data.map(k_dict)
 
-    return ord_data
+    return __new_col_data(col_data, 'ord')
 
 
 def binary(col_data: pd.DataFrame, reverse=False) -> pd.DataFrame:
@@ -189,9 +189,7 @@ def ratio(col_data: pd.DataFrame, n_digits=3) -> pd.DataFrame:
         k_dict[k] = round(v / total, n_digits)
 
     # 利用取值频率映射字典修改数据
-    col_name = getattr(col_data, 'name')
-    rat_data = pd.DataFrame(col_data.map(k_dict))
-    rat_data.columns = [f'{col_name}_ratio']
+    col_data = col_data.map(k_dict)
 
     # 返回数据
-    return rat_data
+    return __new_col_data(col_data, 'ratio')
