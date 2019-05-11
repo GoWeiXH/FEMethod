@@ -42,5 +42,13 @@ def gram_td_idf():
     """
 
 
-def word2vec():
+def word2v():
     ...
+
+
+def wv2sv():
+    """
+    词向量转换成句子向量
+
+    :return:
+    """

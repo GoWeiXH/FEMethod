@@ -125,15 +125,3 @@ def non_linear(col_data: pd.DataFrame)-> pd.DataFrame:
         raise TypeError('Data type must be consistent (int or float)')
 
     return __new_col_data(col_data, 'scale')
-
-
-def one_step():
-    """
-    一步计算，利用函数：
-
-        sqrt(x)、log(x)、1/x、x^k、exp(x)、sin(x)、|x|
-
-    对数据进行映射
-
-    :return:
-    """
