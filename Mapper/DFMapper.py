@@ -2,7 +2,7 @@ from __Helper import __new_col_data
 import pandas as pd
 
 
-def key_value(col_data: pd.DataFrame, map_dict: dict, layer=False) -> pd.DataFrame:
+def key_value(col_data: pd.Series, map_dict: dict, layer=False) -> pd.DataFrame:
     """
     将数据中某一列数据根据给定的映射字典进行替换
     具有两种映射形式：普通映射、分层映射
@@ -63,7 +63,7 @@ def key_value(col_data: pd.DataFrame, map_dict: dict, layer=False) -> pd.DataFra
     return __new_col_data(col_data, 'mapped')
 
 
-def max_min(col_data: pd.DataFrame)-> pd.DataFrame:
+def max_min(col_data: pd.Series) -> pd.DataFrame:
     """
     最大-最小归一化
 
@@ -80,7 +80,7 @@ def max_min(col_data: pd.DataFrame)-> pd.DataFrame:
     return __new_col_data(col_data, 'scale')
 
 
-def mean_std(col_data: pd.DataFrame)-> pd.DataFrame:
+def mean_std(col_data: pd.Series) -> pd.DataFrame:
     """
     使用均值、标准差对数据进行变换
 
@@ -96,7 +96,7 @@ def mean_std(col_data: pd.DataFrame)-> pd.DataFrame:
     return __new_col_data(col_data, 'scale')
 
 
-def median_abs(col_data: pd.DataFrame)-> pd.DataFrame:
+def median_abs(col_data: pd.Series) -> pd.DataFrame:
     """
     利用中位数、绝对差对数据进行变换
     相比 mean_std() 更不易受离群点影响
@@ -113,7 +113,7 @@ def median_abs(col_data: pd.DataFrame)-> pd.DataFrame:
     return __new_col_data(col_data, 'scale')
 
 
-def non_linear(col_data: pd.DataFrame)-> pd.DataFrame:
+def non_linear(col_data: pd.Series) -> pd.DataFrame:
     """
     非线性变换: x / (1+x)
     适合对值域较大的数据

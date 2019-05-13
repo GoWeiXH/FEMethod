@@ -7,7 +7,7 @@ from collections import Counter
 import math
 
 
-def ordinary(col_data: pd.DataFrame, step=1, reverse=False) -> pd.DataFrame:
+def ordinary(col_data: pd.Series, step=1, reverse=False) -> pd.DataFrame:
     """
     将数据中的某一列使用序号编码进行替换，
     序号取值从 0 开始，其取值个数与 col 列中的取值个数一致
@@ -45,7 +45,7 @@ def ordinary(col_data: pd.DataFrame, step=1, reverse=False) -> pd.DataFrame:
     return __new_col_data(col_data, 'ord')
 
 
-def binary(col_data: pd.DataFrame, reverse=False) -> pd.DataFrame:
+def binary(col_data: pd.Series, reverse=False) -> pd.DataFrame:
     """
     将数据中的某一列使用二进制编码进行替换
 
@@ -99,7 +99,7 @@ def binary(col_data: pd.DataFrame, reverse=False) -> pd.DataFrame:
     return bin_data
 
 
-def one_hot(col_data: pd.DataFrame, engine='pd') -> pd.DataFrame:
+def one_hot(col_data: pd.Series, engine='pd') -> pd.DataFrame:
     """
     将数据中的某一列使用 one-hot 编码进行替换
 
@@ -159,7 +159,7 @@ def one_hot(col_data: pd.DataFrame, engine='pd') -> pd.DataFrame:
     return oh_data
 
 
-def ratio(col_data: pd.DataFrame, n_digits=3) -> pd.DataFrame:
+def ratio(col_data: pd.Series, n_digits=3) -> pd.DataFrame:
     """
     将数据中的某一列使用其出现频率进行编码
 
