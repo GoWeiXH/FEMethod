@@ -6,3 +6,4 @@ from .FEProcess import Map
 
 
 __all__ = ['Discrete', 'Encode', 'Text', 'Date', 'Map']
+
