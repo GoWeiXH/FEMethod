@@ -74,7 +74,6 @@ def max_min(col_data: pd.Series) -> pd.DataFrame:
     """
     最大-最小归一化
 
-
     """
 
     max_v = col_data.max()
