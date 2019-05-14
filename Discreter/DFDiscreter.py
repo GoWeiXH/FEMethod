@@ -1,7 +1,8 @@
-from __Helper import __new_col_data
+from __Helper import *
 import pandas as pd
 
 
+@__type_error
 def points(col_data: pd.Series, ps: list, **kwargs) -> pd.DataFrame:
     """
     规则硬分，根据给定分割点进行划分
@@ -26,6 +27,7 @@ def points(col_data: pd.Series, ps: list, **kwargs) -> pd.DataFrame:
     return __new_col_data(points_data, 'cut')
 
 
+@__type_error
 def freq(col_data: pd.Series, n_bins: int, **kwargs) -> pd.DataFrame:
     """
     等频分箱，各离散值拥有相等数量的样本
@@ -39,6 +41,7 @@ def freq(col_data: pd.Series, n_bins: int, **kwargs) -> pd.DataFrame:
     return __new_col_data(freq_data, 'cut')
 
 
+@__type_error
 def width(col_data: pd.Series, n_bins: int, **kwargs) -> pd.DataFrame:
     """
     等宽分箱，将取值区间均分为若干个子区间
@@ -52,6 +55,7 @@ def width(col_data: pd.Series, n_bins: int, **kwargs) -> pd.DataFrame:
     return __new_col_data(width_data, 'cut')
 
 
+@__type_error
 def hashtable():
     """
     Hash分桶，利用 Hash table 方法离散数据
@@ -60,6 +64,7 @@ def hashtable():
     """
 
 
+@__type_error
 def cluster():
     """
     使用一维聚类算法对数据进行离散化

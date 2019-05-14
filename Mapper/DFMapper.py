@@ -1,7 +1,8 @@
-from __Helper import __new_col_data
+from __Helper import *
 import pandas as pd
 
 
+@__type_error
 def key_value(col_data: pd.Series, map_dict: dict, layer=False) -> pd.DataFrame:
     """
     将数据中某一列数据根据给定的映射字典进行替换
@@ -55,47 +56,49 @@ def key_value(col_data: pd.Series, map_dict: dict, layer=False) -> pd.DataFrame:
                 for i in v:
                     new_dict[i] = k
             else:
-                raise TypeError('The value of map_dict must be a list')
+                raise ValueError('The value of map_dict must be a list')
+
         map_dict = new_dict
+
+    default_value = 'no_mapped'
+    for k in set(col_data):
+        map_dict.setdefault(k, default_value)
 
     col_data = col_data.map(map_dict)
 
     return __new_col_data(col_data, 'mapped')
 
 
+@__type_error
 def max_min(col_data: pd.Series) -> pd.DataFrame:
     """
     最大-最小归一化
 
     """
 
-    try:
-        max_v = col_data.max()
-        min_v = col_data.min()
-        d = max_v - min_v
-        col_data = (col_data - min_v) / d
-    except TypeError:
-        raise TypeError('Data type must be consistent (int or float)')
+    max_v = col_data.max()
+    min_v = col_data.min()
+    d = max_v - min_v
+    col_data = (col_data - min_v) / d
 
     return __new_col_data(col_data, 'scale')
 
 
+@__type_error
 def mean_std(col_data: pd.Series) -> pd.DataFrame:
     """
     使用均值、标准差对数据进行变换
 
     """
 
-    try:
-        mean = col_data.mean()
-        std = col_data.std()
-        col_data = (col_data - mean) / std
-    except TypeError:
-        raise TypeError('Data type must be consistent (int or float)')
+    mean = col_data.mean()
+    std = col_data.std()
+    col_data = (col_data - mean) / std
 
     return __new_col_data(col_data, 'scale')
 
 
+@__type_error
 def median_abs(col_data: pd.Series) -> pd.DataFrame:
     """
     利用中位数、绝对差对数据进行变换
@@ -103,25 +106,21 @@ def median_abs(col_data: pd.Series) -> pd.DataFrame:
 
     """
 
-    try:
-        med = col_data.median()
-        abs_d = sum(abs(col_data - med)) / len(col_data)
-        col_data = (col_data - med) / abs_d
-    except TypeError:
-        raise TypeError('Data type must be consistent (int or float)')
+    med = col_data.median()
+    abs_d = sum(abs(col_data - med)) / len(col_data)
+    col_data = (col_data - med) / abs_d
 
     return __new_col_data(col_data, 'scale')
 
 
+@__type_error
 def non_linear(col_data: pd.Series) -> pd.DataFrame:
     """
     非线性变换: x / (1+x)
     适合对值域较大的数据
 
     """
-    try:
-        col_data = col_data.map(lambda x: x * 10 / (1 + x) - 9)
-    except TypeError:
-        raise TypeError('Data type must be consistent (int or float)')
+
+    col_data = col_data.map(lambda x: x * 10 / (1 + x) - 9)
 
     return __new_col_data(col_data, 'scale')
