@@ -519,7 +519,7 @@ class Date:
 
 def new_col_data(col_data: pd.Series, func_name: str) -> pd.DataFrame:
     """
-    将新数据修改列名称
+    对新数据修改列名称
 
     """
     col_name = getattr(col_data, 'name')
