@@ -521,9 +521,6 @@ def new_col_data(col_data: pd.Series, func_name: str) -> pd.DataFrame:
     """
     将新数据修改列名称
 
-    :param col_data: 新数据
-    :param func_name: 所用的 Process 方法名称
-    :return: 修改后的数据
     """
     col_name = getattr(col_data, 'name')
     new_data = pd.DataFrame(col_data)
