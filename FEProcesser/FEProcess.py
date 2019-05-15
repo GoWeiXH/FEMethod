@@ -1,8 +1,10 @@
-import pandas as pd
-import numpy as np
-
 from collections import Counter
 import math
+
+from sklearn.feature_extraction import text
+import pandas as pd
+import numpy as np
+import jieba
 
 
 class Map:
@@ -124,12 +126,13 @@ class Map:
     def __getattribute__(self, func):
         def wrapper(*args, **kwargs):
             try:
-                r = eval('Map.'+func)(Map, *args, **kwargs)
+                r = eval('Map.' + func)(Map, *args, **kwargs)
                 return r
             except TypeError as e:
                 raise TypeError(f'Data type must be consistent, {e}')
             except Exception as e:
                 raise e
+
         return wrapper
 
 
@@ -409,42 +412,39 @@ class Discrete:
 
 class Text:
 
-    def uni_gram(self, ):
+    def n_gram(self, corpus: list, n=(1, 1), encode='count', lang='CN', *args, **kwargs) -> pd.DataFrame:
         """
-        1-gram
+        n-gram 转换器
 
-        :return:
-        """
-
-    def bi_gram(self, freq=True):
-        """
-        2-gram (to all?)
-
-        是否转换成频率
-
-        :return:
+        :param corpus: 需要转换的数据，['sent_0', 'sent_1', ...]
+        :param n: 指定 n-gram 范围，（1，2）表示既有 1-gram 也有 2-gram
+        :param encode: 指定使用的编码方式，默认 'count'
+                            'count' 以 出现次数 表示每个词，并句子向量；
+                            'tf-idf' 以各句子各词的 tf-idf 值表示，并在组成句子向量
+        :param lang: 所面向的语言，默认 ‘CN' 中文
+        :return: 拆分表示后的 DataFrame 数据
         """
 
-    def tri_gram(self, ):
-        """
-        3-gram
+        # 初始化
+        count = text.CountVectorizer(ngram_range=n, *args, **kwargs)
+        tf_idf = text.TfidfVectorizer(ngram_range=n, *args, **kwargs)
+        encode_dict = {'count': count, 'tf-idf': tf_idf}
+        n_gram_worker = encode_dict.get(encode, count)
 
-        :return:
-        """
+        if lang == 'CN':
+            # sklearn 中只接受 str，并按 ‘空格’ 切分句子
+            # 所以对于中文来讲，先使用 jieba 分词，再用 ‘空格’ 拼接
+            corpus = [' '.join(jieba.cut(sent)) for sent in corpus]
 
-    def td_idf(self, ):
-        """
-        td-idf
+        # 转换数据，获取字段名称
+        new_data = n_gram_worker.fit_transform(corpus)
+        columns = n_gram_worker.get_feature_names()
 
-        :return:
-        """
+        # 构建新数据
+        new_data = pd.DataFrame(new_data.toarray())
+        new_data.columns = columns
 
-    def gram_td_idf(self, ):
-        """
-        先进行 n-gram 后计算 td-idf
-
-        :return:
-        """
+        return new_data
 
     def word2v(self, ):
         ...
