@@ -418,6 +418,7 @@ class Text:
 
         :param corpus: 需要转换的数据，['sent_0', 'sent_1', ...]
         :param n: 指定 n-gram 范围，（1，2）表示既有 1-gram 也有 2-gram
+                                   （1，1）表示只有 1-gram
         :param encode: 指定使用的编码方式，默认 'count'
                             'count' 以 出现次数 表示每个词，并句子向量；
                             'tf-idf' 以各句子各词的 tf-idf 值表示，并在组成句子向量
