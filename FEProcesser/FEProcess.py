@@ -7,7 +7,7 @@ import numpy as np
 import jieba
 
 
-class Map:
+class MapProcess:
 
     def key_value(self, col_data: pd.Series, map_dict: dict, layer=False) -> pd.DataFrame:
         """
@@ -123,20 +123,21 @@ class Map:
 
         return new_col_data(col_data, 'scale')
 
-    def __getattribute__(self, func):
-        def wrapper(*args, **kwargs):
-            try:
-                r = eval('Map.' + func)(Map, *args, **kwargs)
-                return r
-            except TypeError as e:
-                raise TypeError(f'Data type must be consistent, {e}')
-            except Exception as e:
-                raise e
+    # 对所有类方法进行异常捕获
+    # def __getattribute__(self, func):
+    #     def wrapper(*args, **kwargs):
+    #         try:
+    #             r = eval('Map.' + func)(self, *args, **kwargs)
+    #             return r
+    #         except TypeError as e:
+    #             raise TypeError(f'Data type must be consistent, {e}')
+    #         except Exception as e:
+    #             raise e
+    #
+    #     return wrapper
 
-        return wrapper
 
-
-class Encode:
+class EncodeProcess:
 
     def ordinary(self, col_data: pd.Series, step=1, reverse=False) -> pd.DataFrame:
         """
@@ -321,20 +322,8 @@ class Encode:
         # 返回数据
         return new_col_data(col_data, 'ratio')
 
-    def __getattribute__(self, func):
-        def wrapper(*args, **kwargs):
-            try:
-                r = eval('Encode.' + func)(Encode, *args, **kwargs)
-                return r
-            except TypeError as e:
-                raise TypeError(f'Data type must be consistent, {e}')
-            except Exception as e:
-                raise e
 
-        return wrapper
-
-
-class Discrete:
+class DiscreteProcess:
 
     def points(self, col_data: pd.Series, ps: list, **kwargs) -> pd.DataFrame:
         """
@@ -397,20 +386,8 @@ class Discrete:
         :return:
         """
 
-    def __getattribute__(self, func):
-        def wrapper(*args, **kwargs):
-            try:
-                r = eval('Discrete.' + func)(Discrete, *args, **kwargs)
-                return r
-            except TypeError as e:
-                raise TypeError(f'Data type must be consistent, {e}')
-            except Exception as e:
-                raise e
 
-        return wrapper
-
-
-class Text:
+class TextProcess:
 
     def n_gram(self, corpus: list, n=(1, 1), encode='count', lang='CN', *args, **kwargs) -> pd.DataFrame:
         """
@@ -457,20 +434,8 @@ class Text:
         :return:
         """
 
-    def __getattribute__(self, func):
-        def wrapper(*args, **kwargs):
-            try:
-                r = eval('Text.' + func)(Text, *args, **kwargs)
-                return r
-            except TypeError as e:
-                raise TypeError(f'Data type must be consistent, {e}')
-            except Exception as e:
-                raise e
 
-        return wrapper
-
-
-class Date:
+class DateProcess:
 
     def extract(self, subject):
         """
@@ -505,17 +470,134 @@ class Date:
         :return:
         """
 
-    def __getattribute__(self, func):
-        def wrapper(*args, **kwargs):
-            try:
-                r = eval('Date.' + func)(Date, *args, **kwargs)
-                return r
-            except TypeError as e:
-                raise TypeError(f'Data type must be consistent, {e}')
-            except Exception as e:
-                raise e
 
-        return wrapper
+class FeatureSimilar:
+
+    def smc_sim(self, data_1: pd.Series, data_2: pd.Series, digits=4) -> float:
+        """
+        SMC (Simple Match Coefficient) 简单匹配系数
+
+        针对二值数据 (1,0) 计算相似度
+
+        jc = f_11 + f_00 / (f_10 + f_01 + f_11 + f_00)
+
+        f_11、f_00: 取值相同
+        f_01、f_10: 取值不同
+        """
+
+        for data in (data_1, data_2):
+            if set(Counter(data)) - {0, 1}:
+                raise ValueError(f"Make sure the value of data is 0 or 1: column['{data.name}']")
+
+        result = data_1 + data_2
+
+        counts = result.value_counts()
+        f_00 = counts[0]
+        f_11 = counts[2]
+        f_10_01 = counts[1]
+
+        smc = f_11 / (f_00 + f_10_01)
+        return round(smc, digits)
+
+    def jcd_sim(self, data_1: pd.Series, data_2: pd.Series, digits=4) -> float:
+        """
+        Jaccard 系数，忽略二者相等且为 0 的数据，可以应用于稀疏数据。
+
+        针对二值数据 (1,0) 计算相似度。
+
+        jc = f_11 / (f_10 + f_01 + f_11)
+
+        f_11: 取值全为 1
+        f_01、f_10: 取值不同
+
+        完全相同则 Jaccard 系数为 1，完全不同则为 0；
+        """
+
+        for data in (data_1, data_2):
+            if set(Counter(data)) - {0, 1}:
+                raise ValueError(f"Make sure the value of data is 0 or 1: column['{data.name}']")
+
+        result = data_1 + data_2
+
+        counts = result.value_counts()
+        f_11 = counts[2]
+        f_10_01 = counts[1]
+
+        smc = f_11 / (f_10_01 + f_11)
+        return round(smc, digits)
+
+    def jcd_dis(self, data_1: pd.Series, data_2: pd.Series, digits=4) -> float:
+
+        return 1 - self.jcd_sim(data_1, data_2, digits)
+
+    def l1_dis(self, data_1: pd.Series, data_2: pd.Series) -> float:
+        """
+        曼哈顿距离
+
+        距离易受取值范围较大特征的影响，应注意数据规范化。
+        """
+
+        return float(np.sum(np.abs(data_1 - data_2)))
+
+    def l2_dis(self, data_1: pd.Series, data_2: pd.Series, digits=4) -> float:
+        """
+        欧氏距离
+
+        距离易受取值范围较大特征的影响，应注意数据规范化。
+
+        dis_l2 = sqrt(sum((data_1 - data_2)**2))
+        """
+
+        return round(math.sqrt(np.sum((data_1 - data_2)**2)), digits)
+
+    def pearson(self, data_1: pd.Series, data_2: pd.Series, digits=4) -> float:
+        """
+        Pearson 系数
+
+        正相关等于 1
+        负相关等于 -1
+        无线性关系 0
+        """
+
+        mean_1 = np.mean(data_1)
+        mean_2 = np.mean(data_2)
+
+        data_1_diff = data_1 - mean_1
+        data_2_diff = data_2 - mean_2
+
+        cov = np.dot(data_1_diff, data_2_diff)
+        std_1 = np.sum(np.square(data_1_diff))
+        std_2 = np.sum(np.square(data_2_diff))
+        pc = cov / np.sqrt(std_1 * std_2)
+
+        return round(pc, digits)
+
+    def spearman(self, data_1: pd.Series, data_2: pd.Series, digits=4) -> float:
+        """
+        Spearman 相关系数
+
+        如果两个变量存在秩次，则
+
+            sc = 1 - 6*sum((x-y)^2) / n(n^2-1)
+
+        如果不存在秩次关系，仍然使用 pearson 系数计算
+        """
+
+        return round(data_1.corr(data_2, method='spearman'), digits)
+
+    def cosine(self, data_1: pd.Series, data_2: pd.Series, digits=4) -> float:
+        """
+                余弦相似度
+
+                cos = A·B / ||A||·||B||
+                """
+
+        dot = np.dot(data_1, data_2)
+        data_1_l2 = np.sqrt(np.sum(np.square(data_1)))
+        data_2_l2 = np.sqrt(np.sum(np.square(data_2)))
+        cos = dot / (data_1_l2 * data_2_l2)
+
+        return round(cos, digits)
 
 
 def new_col_data(col_data: pd.Series, func_name: str) -> pd.DataFrame:
