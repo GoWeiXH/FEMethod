@@ -72,7 +72,7 @@ class MapProcess:
 
         col_data = col_data.map(map_dict)
 
-        return new_col_data(col_data, 'mapped')
+        return _new_col_data(col_data, 'mapped')
 
     def max_min(self, col_data: pd.Series) -> pd.DataFrame:
         """
@@ -85,7 +85,7 @@ class MapProcess:
         d = max_v - min_v
         col_data = (col_data - min_v) / d
 
-        return new_col_data(col_data, 'scale')
+        return _new_col_data(col_data, 'scale')
 
     def mean_std(self, col_data: pd.Series) -> pd.DataFrame:
         """
@@ -97,7 +97,7 @@ class MapProcess:
         std = col_data.std()
         col_data = (col_data - mean) / std
 
-        return new_col_data(col_data, 'scale')
+        return _new_col_data(col_data, 'scale')
 
     def median_abs(self, col_data: pd.Series) -> pd.DataFrame:
         """
@@ -110,7 +110,7 @@ class MapProcess:
         abs_d = sum(abs(col_data - med)) / len(col_data)
         col_data = (col_data - med) / abs_d
 
-        return new_col_data(col_data, 'scale')
+        return _new_col_data(col_data, 'scale')
 
     def non_linear(self, col_data: pd.Series) -> pd.DataFrame:
         """
@@ -121,7 +121,7 @@ class MapProcess:
 
         col_data = col_data.map(lambda x: x * 10 / (1 + x) - 9)
 
-        return new_col_data(col_data, 'scale')
+        return _new_col_data(col_data, 'scale')
 
     # 对所有类方法进行异常捕获
     # def __getattribute__(self, func):
@@ -174,7 +174,7 @@ class EncodeProcess:
         # 对数据进行替换
         col_data = col_data.map(k_dict)
 
-        return new_col_data(col_data, 'ord')
+        return _new_col_data(col_data, 'ord')
 
     def binary(self, col_data: pd.Series, reverse=False) -> pd.DataFrame:
         """
@@ -320,7 +320,7 @@ class EncodeProcess:
         col_data = col_data.map(k_dict)
 
         # 返回数据
-        return new_col_data(col_data, 'ratio')
+        return _new_col_data(col_data, 'ratio')
 
 
 class DiscreteProcess:
@@ -346,7 +346,7 @@ class DiscreteProcess:
         labels = kwargs.get('labels')
         points_data = col_data.map(to_range)
 
-        return new_col_data(points_data, 'cut')
+        return _new_col_data(points_data, 'cut')
 
     def freq(self, col_data: pd.Series, n_bins: int, **kwargs) -> pd.DataFrame:
         """
@@ -358,7 +358,7 @@ class DiscreteProcess:
         """
 
         freq_data = pd.qcut(col_data, n_bins, **kwargs)
-        return new_col_data(freq_data, 'cut')
+        return _new_col_data(freq_data, 'cut')
 
     def width(self, col_data: pd.Series, n_bins: int, **kwargs) -> pd.DataFrame:
         """
@@ -370,7 +370,7 @@ class DiscreteProcess:
         """
 
         width_data = pd.cut(col_data, n_bins, **kwargs)
-        return new_col_data(width_data, 'cut')
+        return _new_col_data(width_data, 'cut')
 
     def hashtable(self, ):
         """
@@ -600,7 +600,7 @@ class FeatureSimilar:
         return round(cos, digits)
 
 
-def new_col_data(col_data: pd.Series, func_name: str) -> pd.DataFrame:
+def _new_col_data(col_data: pd.Series, func_name: str) -> pd.DataFrame:
     """
     对新数据修改列名称
 
