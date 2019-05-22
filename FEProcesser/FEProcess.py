@@ -10,12 +10,13 @@ import jieba
 
 class MapProcess:
 
-    def key_value(self, col_data: pd.Series, map_dict: dict, layer=False) -> pd.DataFrame:
+    def key_value(self, data: pd.DataFrame, col_name: str, map_dict: dict, layer=False) -> pd.DataFrame:
         """
         将数据中某一列数据根据给定的映射字典进行替换
         具有两种映射形式：普通映射、分层映射
 
-        :param col_data: 需要映射表示的列数据
+        :param data: 原始完整数据
+        :param col_name: 需要映射表示的列名称
         :param map_dict: 指定映射字典
         :param layer: 是否分层映射，如果 True，则 map_dict 中的 values 应为可迭代对象
         :return: 映射后的 DataFrame 数据
@@ -55,6 +56,7 @@ class MapProcess:
                 3           b
 
         """
+        col_data = data[col_name]
 
         if layer:
             new_dict = dict()
@@ -73,56 +75,62 @@ class MapProcess:
 
         col_data = col_data.map(map_dict)
 
-        return _new_col_data(col_data, 'mapped')
+        return _new_col_data(data, col_data, 'mapped')
 
-    def max_min(self, col_data: pd.Series) -> pd.DataFrame:
+    def max_min(self, data: pd.DataFrame, col_name: str) -> pd.DataFrame:
         """
         最大-最小归一化
 
         """
+        col_data = data[col_name]
 
         max_v = col_data.max()
         min_v = col_data.min()
         d = max_v - min_v
         col_data = (col_data - min_v) / d
 
-        return _new_col_data(col_data, 'scale')
+        return _new_col_data(data, col_data, 'scale')
 
-    def mean_std(self, col_data: pd.Series) -> pd.DataFrame:
+    def mean_std(self, data: pd.DataFrame, col_name: str) -> pd.DataFrame:
         """
         使用均值、标准差对数据进行变换
 
         """
+        col_data = data[col_name]
 
         mean = col_data.mean()
         std = col_data.std()
         col_data = (col_data - mean) / std
 
-        return _new_col_data(col_data, 'scale')
+        return _new_col_data(data, col_data, 'scale')
 
-    def median_abs(self, col_data: pd.Series) -> pd.DataFrame:
+    def median_abs(self, data: pd.DataFrame, col_name: str) -> pd.DataFrame:
         """
         利用中位数、绝对差对数据进行变换
         相比 mean_std() 更不易受离群点影响
 
         """
 
+        col_data = data[col_name]
+
         med = col_data.median()
         abs_d = sum(abs(col_data - med)) / len(col_data)
         col_data = (col_data - med) / abs_d
 
-        return _new_col_data(col_data, 'scale')
+        return _new_col_data(data, col_data, 'scale')
 
-    def non_linear(self, col_data: pd.Series) -> pd.DataFrame:
+    def non_linear(self, data: pd.DataFrame, col_name: str) -> pd.DataFrame:
         """
         非线性变换: x / (1+x)
         适合对值域较大的数据
 
         """
 
+        col_data = data[col_name]
+
         col_data = col_data.map(lambda x: x * 10 / (1 + x) - 9)
 
-        return _new_col_data(col_data, 'scale')
+        return _new_col_data(data, col_data, 'scale')
 
     # 对所有类方法进行异常捕获
     # def __getattribute__(self, func):
@@ -140,12 +148,13 @@ class MapProcess:
 
 class EncodeProcess:
 
-    def ordinary(self, col_data: pd.Series, step=1, reverse=False) -> pd.DataFrame:
+    def ordinary(self, data: pd.DataFrame, col_name: str, step=1, reverse=False) -> pd.DataFrame:
         """
         将数据中的某一列使用序号编码进行替换，
         序号取值从 0 开始，其取值个数与 col 列中的取值个数一致
 
-        :param col_data: 需要编码表示的列数据
+        :param data: 完整原始数据
+        :param col_name: 需要编码的列名
         :param step: 默认以 1 步长增长，可以指定
         :param reverse: 默认 False，取值出现次数越多值越大；True 则相反
         :return: 编码后的 DataFrame 数据
@@ -164,6 +173,8 @@ class EncodeProcess:
         """
 
         # 以字典形式统计当前所选列数据共有多少种取值
+        col_data = data[col_name]
+
         unique = Counter(col_data)
 
         # 根据每个取值出现的次数进行排序，出现次数多的取值大
@@ -175,13 +186,16 @@ class EncodeProcess:
         # 对数据进行替换
         col_data = col_data.map(k_dict)
 
-        return _new_col_data(col_data, 'ord')
+        ord_data = _new_col_data(data, col_data, 'ord')
 
-    def binary(self, col_data: pd.Series, reverse=False) -> pd.DataFrame:
+        return ord_data
+
+    def binary(self, data: pd.DataFrame, col_name: str, reverse=False) -> pd.DataFrame:
         """
         将数据中的某一列使用二进制编码进行替换
 
-        :param col_data: 需要编码表示的列数据
+        :param data: 完整原始数据
+        :param col_name: 需要编码表示的列名
         :param reverse: 默认出现次数多的取值所对应的二进制数大，reverse=True 则相反
         :return: 编码后的 DataFrame 数据
 
@@ -197,6 +211,7 @@ class EncodeProcess:
             3          0          1
 
         """
+        col_data = data[col_name]
 
         # 以字典形式统计当前所选列数据共有多少种取值
         k_dict = dict(Counter(col_data))
@@ -226,14 +241,17 @@ class EncodeProcess:
         for i in range(cols_data.shape[1]):
             bin_data[f'{col_name}_bin_{i}'] = cols_data[:, i]
 
+        bin_data = pd.concat((data, bin_data), axis=1)
+
         # 返回数据
         return bin_data
 
-    def one_hot(self, col_data: pd.Series, engine='pd') -> pd.DataFrame:
+    def one_hot(self, data: pd.DataFrame, col_name: str, engine='pd') -> pd.DataFrame:
         """
         将数据中的某一列使用 one-hot 编码进行替换
 
-        :param col_data: 需要编码表示的列数据
+        :param data: 完整原始数据
+        :param col_name: 需要编码表示的列数据
         :param engine: 默认使用 pandas.get_dummies()，否则使用自己实现方式
         :return: 编码后的 DataFrame 数据
 
@@ -258,41 +276,46 @@ class EncodeProcess:
             2          0         0           1
             3          0         1           0
         """
+        col_data = data[col_name]
 
         col_name = getattr(col_data, 'name')
         if engine == 'pd':
             oh_data = pd.get_dummies(col_data, columns=[col_name])
             oh_data.columns = [f'{col_name}_{name}' for name in oh_data.columns]
-            return oh_data
 
-        # 计算该列取值个数
-        unique = set(col_data)
-        unique_length = len(unique)
+        else:
+            # 计算该列取值个数
+            unique = set(col_data)
+            unique_length = len(unique)
 
-        # 得到取值与列索引的对应关系
-        k_dict = dict(zip(unique, range(unique_length)))
+            # 得到取值与列索引的对应关系
+            k_dict = dict(zip(unique, range(unique_length)))
 
-        # 将数据转换成向量（所在索引取值为 1 ）
-        # 全 0 初始化矩阵
-        init_matrix = np.zeros((len(col_data), unique_length), dtype=np.int)
+            # 将数据转换成向量（所在索引取值为 1 ）
+            # 全 0 初始化矩阵
+            init_matrix = np.zeros((len(col_data), unique_length), dtype=np.int)
 
-        # 将第 r 行的数据根据列索引修改为 1
-        col_data = col_data.map(k_dict)
-        init_matrix[range(len(col_data)), col_data] = 1
+            # 将第 r 行的数据根据列索引修改为 1
+            col_data = col_data.map(k_dict)
+            init_matrix[range(len(col_data)), col_data] = 1
 
-        # 添加 one-hot 列名，生成 DataFrame 数据
-        k_dict_inverse = dict(zip(k_dict.values(), k_dict.keys()))
-        columns = [f'{col_name}_{k_dict_inverse[i]}' for i in range(len(unique))]
-        oh_data = pd.DataFrame(init_matrix, columns=columns)
+            # 添加 one-hot 列名，生成 DataFrame 数据
+            k_dict_inverse = dict(zip(k_dict.values(), k_dict.keys()))
+            columns = [f'{col_name}_{k_dict_inverse[i]}' for i in range(len(unique))]
+            oh_data = pd.DataFrame(init_matrix, columns=columns)
 
+        # 合并数据
+        oh_data = pd.concat((data, oh_data), axis=1)
+        del oh_data[col_name]
         # 返回数据
         return oh_data
 
-    def ratio(self, col_data: pd.Series, n_digits=3) -> pd.DataFrame:
+    def ratio(self, data: pd.DataFrame, col_name: str, n_digits=3) -> pd.DataFrame:
         """
         将数据中的某一列使用其出现频率进行编码
 
-        :param col_data: 需要编码表示的列数据
+        :param data: 原始完整数据
+        :param col_name: 需要编码表示的列名称
         :param n_digits: 计算频率保留小数位数
         :return: 编码后的 DataFrame 数据
 
@@ -308,6 +331,7 @@ class EncodeProcess:
             3        0.25
 
         """
+        col_data = data[col_name]
 
         # 计算各取值的个数
         k_dict = Counter(col_data)
@@ -321,19 +345,23 @@ class EncodeProcess:
         col_data = col_data.map(k_dict)
 
         # 返回数据
-        return _new_col_data(col_data, 'ratio')
+        return _new_col_data(data, col_data, 'ratio')
 
 
 class DiscreteProcess:
 
-    def points(self, col_data: pd.Series, ps: list, **kwargs) -> pd.DataFrame:
+    def points(self, data: pd.DataFrame, col_name: str, ps: list, **kwargs) -> pd.DataFrame:
         """
         规则硬分，根据给定分割点进行划分
 
-        :param col_data: 需要离散化的列数据
+        :param data: 完整原始数据
+        :param col_name: 需要离散化的列名
         :param ps: 包含切分点的 list
+        :param del_flag: 是否删除原列数据，默认 True
         :return: 离散化后 DataFrame 数据
         """
+        col_data = data[col_name]
+
         ps = [min(col_data) - 0.001] + ps + [max(col_data)]
 
         def to_range(x):
@@ -347,31 +375,36 @@ class DiscreteProcess:
         labels = kwargs.get('labels')
         points_data = col_data.map(to_range)
 
-        return _new_col_data(points_data, 'cut')
+        return _new_col_data(data, points_data, 'cut')
 
-    def freq(self, col_data: pd.Series, n_bins: int, **kwargs) -> pd.DataFrame:
+    def freq(self, data: pd.DataFrame, col_name: str, n_bins: int, **kwargs) -> pd.DataFrame:
         """
         等频分箱，各离散值拥有相等数量的样本
 
-        :param col_data: 需要离散化的列数据
+        :param data: 原始完整数据
+        :param col_name: 需要离散化的列名称
         :param n_bins: 要求划分成的类别个数
         :return: 离散化后 DataFrame 数据
         """
+        col_data = data[col_name]
 
         freq_data = pd.qcut(col_data, n_bins, **kwargs)
-        return _new_col_data(freq_data, 'cut')
+        return _new_col_data(data, freq_data, 'cut')
 
-    def width(self, col_data: pd.Series, n_bins: int, **kwargs) -> pd.DataFrame:
+    def width(self, data: pd.DataFrame, col_name: str, n_bins: int, **kwargs) -> pd.DataFrame:
         """
         等宽分箱，将取值区间均分为若干个子区间
 
-        :param col_data: 需要离散化的列数据
+        :param data: 原始完整数据
+        :param col_name: 需要离散化的列名称
         :param n_bins: 要求划分成的类别个数
         :return: 离散化后 DataFrame 数据
         """
 
+        col_data = data[col_name]
+
         width_data = pd.cut(col_data, n_bins, **kwargs)
-        return _new_col_data(width_data, 'cut')
+        return _new_col_data(data, width_data, 'cut')
 
     def hashtable(self, ):
         """
@@ -638,7 +671,7 @@ class FeatureSimilar:
         return round(cos, digits)
 
 
-def _new_col_data(col_data: pd.Series, func_name: str) -> pd.DataFrame:
+def _new_col_data(data: pd.DataFrame, col_data: pd.Series, func_name: str) -> pd.DataFrame:
     """
     对新数据修改列名称
 
@@ -646,4 +679,6 @@ def _new_col_data(col_data: pd.Series, func_name: str) -> pd.DataFrame:
     col_name = getattr(col_data, 'name')
     new_data = pd.DataFrame(col_data)
     new_data.columns = [f'{col_name}_{func_name}']
+    new_data = pd.concat((data, new_data), axis=1)
+    del new_data[col_name]
     return new_data
