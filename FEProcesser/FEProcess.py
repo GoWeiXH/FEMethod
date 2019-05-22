@@ -1,5 +1,6 @@
 from collections import Counter
 import math
+import re
 
 from sklearn.feature_extraction import text
 import pandas as pd
@@ -389,6 +390,9 @@ class DiscreteProcess:
 
 class TextProcess:
 
+    punctuation = ",.;:/!?'`\"<>{}[]()" + "，。、；？！《》【】’‘“”：·…—"
+    blank = [' ', '\n', '\r', '\r\n', '\t']
+
     def n_gram(self, corpus: list, n=(1, 1), encode='count', lang='CN', *args, **kwargs) -> pd.DataFrame:
         """
         n-gram 转换器
@@ -423,6 +427,40 @@ class TextProcess:
         new_data.columns = columns
 
         return new_data
+
+    def del_stop_word(self, ori_sent: list, stop_words: list) -> list:
+        """
+        剔除停用词
+        """
+
+        clear_sent = [w for w in ori_sent if w not in stop_words]
+
+        return clear_sent
+
+    def del_punctuation(self, ori_sent: list, punctuation='') -> list:
+        """
+        剔除标点
+        """
+        if punctuation != '':
+            lib = punctuation
+        else:
+            lib = self.punctuation
+
+        lib = lib.split()
+        print('Delete items:', self.punctuation)
+        clear_sent = [w for w in ori_sent if w not in lib]
+
+        return clear_sent
+
+    def del_blank(self, ori_sent: list) -> list:
+        """
+        去除空格、回车 \r\n
+        """
+        print('Delete items:', self.blank)
+        lib = self.blank
+        clear_sent = [w for w in ori_sent if w not in lib]
+
+        return clear_sent
 
     def word2v(self, ):
         ...
